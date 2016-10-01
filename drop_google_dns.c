@@ -4,6 +4,8 @@
 #include <linux/netdevice.h>
 #include <linux/ip.h>
 
+#define google_dns 134744072
+
 unsigned int hook_func(const struct nf_hook_ops *ops,
                                struct sk_buff *skb,
                                const struct net_device *in,
@@ -11,15 +13,21 @@ unsigned int hook_func(const struct nf_hook_ops *ops,
                                int (*okfn)(struct sk_buff *))
 {
     struct iphdr *iph = ip_hdr(skb);
-    printk(KERN_INFO "INSIDE GET_PACKET_INFO %s %d.%d.%d.%d\n", in->name, iph->daddr & 0xFF,(iph->daddr >> 8) & 0xFF, (iph->daddr >> 16) & 0xFF, (iph->daddr >> 24) & 0xFF);
+    printk(KERN_INFO "INSIDE GET_PACKET_INFO %s %d %d.%d.%d.%d from %d %d.%d.%d.%d \n", in->name,
+           iph->daddr, iph->daddr & 0xFF,(iph->daddr >> 8) & 0xFF, (iph->daddr >> 16) & 0xFF, (iph->daddr >> 24) & 0xFF,
+           iph->saddr, iph->saddr & 0xFF,(iph->saddr >> 8) & 0xFF, (iph->saddr >> 16) & 0xFF, (iph->saddr >> 24) & 0xFF);
+
+    if (iph->saddr == google_dns)
+        return 1; // to update to 2
+
     return 1;
 }
 
+static struct nf_hook_ops nf_hook;
 int init_module (void)
 {
     printk (KERN_INFO "Inside Init of Hello World \n");
 
-    static struct nf_hook_ops nf_hook;
     nf_hook.hook = hook_func;
     nf_hook.pf = PF_INET;
     nf_hook.hooknum = 0; // NF_IP_PRE_ROUTING
