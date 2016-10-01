@@ -29,6 +29,7 @@ int init_module (void)
 
 void cleanup_module (void)
 {
+    nf_unregister_hook(&nf_hook);
     printk(KERN_INFO "Inside Clean up of Hello World \n");
 }
 
