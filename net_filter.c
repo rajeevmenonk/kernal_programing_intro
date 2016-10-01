@@ -2,6 +2,7 @@
 #include <linux/kernel.h>
 #include <linux/netfilter.h>
 #include <linux/netdevice.h>
+#include <linux/ip.h>
 
 unsigned int hook_func(const struct nf_hook_ops *ops,
                                struct sk_buff *skb,
@@ -9,7 +10,8 @@ unsigned int hook_func(const struct nf_hook_ops *ops,
                                const struct net_device *out,
                                int (*okfn)(struct sk_buff *))
 {
-    printk(KERN_INFO "INSIDE GET_PACKET_INFO %s \n", in->name);
+    struct iphdr *iph = ip_hdr(skb);
+    printk(KERN_INFO "INSIDE GET_PACKET_INFO %s %d\n", in->name, iph->daddr);
     return 1;
 }
 
