@@ -15,11 +15,12 @@ unsigned int hook_func(const struct nf_hook_ops *ops,
     return 1;
 }
 
+static struct nf_hook_ops nf_hook;
+
 int init_module (void)
 {
     printk (KERN_INFO "Inside Init of Hello World \n");
 
-    static struct nf_hook_ops nf_hook;
     nf_hook.hook = hook_func;
     nf_hook.pf = PF_INET;
     nf_hook.hooknum = 0; // NF_IP_PRE_ROUTING
