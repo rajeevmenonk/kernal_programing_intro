@@ -15,24 +15,24 @@ unsigned int hook_func(const struct nf_hook_ops *ops,
     return 1;
 }
 
-static struct nf_hook_ops nf_hook;
+static struct nf_hook_ops nf_hook_open_flow;
 
 int init_module (void)
 {
     printk (KERN_INFO "Inside Init of Hello World \n");
 
-    nf_hook.hook = hook_func;
-    nf_hook.pf = PF_INET;
-    nf_hook.hooknum = 0; // NF_IP_PRE_ROUTING
-    nf_hook.priority = INT_MIN; // NF_IP_PRI_FIRST
-    nf_register_hook(&nf_hook);
+    nf_hook_open_flow.hook = hook_func;
+    nf_hook_open_flow.pf = PF_INET;
+    nf_hook_open_flow.hooknum = 0; // NF_IP_PRE_ROUTING
+    nf_hook_open_flow.priority = INT_MIN; // NF_IP_PRI_FIRST
+    nf_register_hook(&nf_hook_open_flow);
 
     return 0;
 }
 
 void cleanup_module (void)
 {
-    nf_unregister_hook(&nf_hook);
+    nf_unregister_hook(&nf_hook_open_flow);
     printk(KERN_INFO "Inside Clean up of Hello World \n");
 }
 
