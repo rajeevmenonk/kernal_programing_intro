@@ -1,4 +1,4 @@
-obj-m+=drop_google_dns.o
+obj-m+=forward_packets_from_ip.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
