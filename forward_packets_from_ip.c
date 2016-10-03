@@ -5,12 +5,31 @@
 #include <linux/ip.h>
 #include <linux/kthread.h>
 #include <net/ip.h>
+#include <net/arp.h>
+#include <net/sock.h>
 
 #define OF_SOURCE_IP 100
+#define NEXT_HOP_IP_OF 1000
 
 void send_the_packet_out (struct sk_buff *skb)
 {
-     ip_output(skb);
+     //ip_output(skb);
+    struct sock *sk = skb->sk;
+    struct net *net = sock_net(sk);
+    struct net_device *dev = __dev_get_by_name(net, "eth1");
+    struct neighbour *neigh;
+    
+    rcu_read_lock_bh();
+    u32 nexthop = NEXT_HOP_IP_OF;
+    neigh = __ipv4_neigh_lookup_noref(dev, nexthop);
+    if (unlikely(!neigh))
+            neigh = __neigh_create(&arp_tbl, &nexthop, dev, false);
+    if (!IS_ERR(neigh)) {
+            dst_neigh_output(skb_dst(skb), neigh, skb);
+            rcu_read_unlock_bh();
+    }
+    rcu_read_unlock_bh();
+    dev_queue_xmit(skb);
 }
 
 unsigned int hook_func(const struct nf_hook_ops *ops,
