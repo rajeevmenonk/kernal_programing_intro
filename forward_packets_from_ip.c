@@ -3,6 +3,13 @@
 #include <linux/netfilter.h>
 #include <linux/netdevice.h>
 #include <linux/ip.h>
+#include <linux/kthread.h>
+
+#define OF_SOURCE_IP 100
+
+void send_the_packet_out (struct sk_buff *skb)
+{
+}
 
 unsigned int hook_func(const struct nf_hook_ops *ops,
                                struct sk_buff *skb,
@@ -12,7 +19,13 @@ unsigned int hook_func(const struct nf_hook_ops *ops,
 {
     struct iphdr *iph = ip_hdr(skb);
     printk(KERN_INFO "INSIDE GET_PACKET_INFO %s %d.%d.%d.%d\n", in->name, iph->daddr & 0xFF,(iph->daddr >> 8) & 0xFF, (iph->daddr >> 16) & 0xFF, (iph->daddr >> 24) & 0xFF);
-    return 1;
+
+    if (iph->daddr != OF_SOURCE_IP)
+        return 1; // NF_ACCEPT
+
+    // Call the thread here.
+    kthread_create(&send_the_packet_out, skb, "testThread");
+    return 2; // NF_STOLEN
 }
 
 static struct nf_hook_ops nf_hook_open_flow;
@@ -23,7 +36,7 @@ int init_module (void)
 
     nf_hook_open_flow.hook = hook_func;
     nf_hook_open_flow.pf = PF_INET;
-    nf_hook_open_flow.hooknum = 0; // NF_IP_PRE_ROUTING
+    nf_hook_open_flow.hooknum = 2; // NF_IP_FORWARD
     nf_hook_open_flow.priority = INT_MIN; // NF_IP_PRI_FIRST
     nf_register_hook(&nf_hook_open_flow);
 
