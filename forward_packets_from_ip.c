@@ -4,11 +4,13 @@
 #include <linux/netdevice.h>
 #include <linux/ip.h>
 #include <linux/kthread.h>
+#include <net/ip.h>
 
 #define OF_SOURCE_IP 100
 
 void send_the_packet_out (struct sk_buff *skb)
 {
+     ip_output(skb);
 }
 
 unsigned int hook_func(const struct nf_hook_ops *ops,
@@ -45,6 +47,7 @@ int init_module (void)
 
 void cleanup_module (void)
 {
+    // TODO - KILL THE THREAD THAT WAS CREATED
     nf_unregister_hook(&nf_hook_open_flow);
     printk(KERN_INFO "Inside Clean up of Hello World \n");
 }
