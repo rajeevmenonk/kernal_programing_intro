@@ -8,15 +8,15 @@
 #include <net/arp.h>
 #include <net/sock.h>
 
-#define OF_SOURCE_IP 100
-#define NEXT_HOP_IP_OF 1000
+#define OF_SOURCE_IP 3232236546
+#define NEXT_HOP_IP_OF 3232236034
 
 void send_the_packet_out (struct sk_buff *skb)
 {
      //ip_output(skb);
     struct sock *sk = skb->sk;
     struct net *net = sock_net(sk);
-    struct net_device *dev = __dev_get_by_name(net, "eth1");
+    struct net_device *dev = __dev_get_by_name(net, "eth2");
     struct neighbour *neigh;
     
     rcu_read_lock_bh();
