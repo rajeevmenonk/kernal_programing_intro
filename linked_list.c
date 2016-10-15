@@ -34,10 +34,10 @@ void deleteElement (struct listTracker *head,
 {
     struct listTracker *iter = head;
     while(iter->next && iter->next != toDelete)
-    {
        iter = iter->next;
-       printk(KERN_INFO "\n next");
-    }
+
+    if (!iter->next)
+        return;
 
     iter->next = toDelete->next;
 }
@@ -61,8 +61,8 @@ int init_module (void)
 
     struct flowStruct *new;
 
-    int i = 0;
-    while(i < 5)
+    int i = 1;
+    while(i < 6)
     {
         printk (KERN_INFO "Adding element to linked list %d \n", i);
         new = kmalloc(sizeof(struct flowStruct), GFP_KERNEL);
@@ -87,11 +87,17 @@ void cleanup_module (void)
 {
     printk(KERN_INFO "Inside Clean up of Hello World \n");
     struct flowStruct *new = (struct flowStruct *)head->next;
+    int i =0;
     while(new)
     {
+	printk(KERN_INFO "Value being deleted is %d \n", new->value);
         deleteElement(head, (struct listTracker*)new);
         kfree(new);
         printList(head);
+        new = (struct flowStruct *)head->next;
+        i++;
+        if (i > 10)
+            break;
     }
     kfree(head);
 }
