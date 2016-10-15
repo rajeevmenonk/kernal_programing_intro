@@ -8,24 +8,61 @@
 #include <net/arp.h>
 #include <net/sock.h>
 
+struct listTracker
+{
+    struct listTracker *next;
+};
+
 struct flowStruct 
 {
-    struct flowStruct *node;
+    struct listTracker *next;
     int value;
 };
+
+void insertElement (struct listTracker *head, 
+                    struct listTracker *new)
+{
+    struct listTracker *iter = head;
+    while(iter->next)
+        iter = iter->next;
+
+    iter->next = new;
+}
+
+void deleteElement (struct listTracker *head,
+                    struct listTracker *toDelete)
+{
+    struct listTracker *iter = head;
+    while(iter->next && iter->next != toDelete)
+       iter = iter->next;
+
+    iter = toDelete->next;
+}
+
+static struct listTracker *head;
 int init_module (void)
 {
-    struct flowStruct a,b;
-    a.value = 10;
-    b.value = 20;
-    a.node = &b;
-
     printk (KERN_INFO "Inside Init of Hello World \n");
+    head = kmalloc(sizeof(struct listTracker), GFP_KERNEL);
+
+    struct flowStruct *new;
+
+    int i = 0;
+    while(i < 5)
+    {
+        printk (KERN_INFO "Adding element to linked list \n");
+        new = kmalloc(sizeof(struct flowStruct), GFP_KERNEL);
+        new->value = i*10;
+        insertElement(head, new);
+        i++;
+    }
     return 0;
 }
 
 void cleanup_module (void)
 {
     printk(KERN_INFO "Inside Clean up of Hello World \n");
+
+    // To add clean up code;
 }
 
