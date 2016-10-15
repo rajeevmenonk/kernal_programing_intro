@@ -34,9 +34,22 @@ void deleteElement (struct listTracker *head,
 {
     struct listTracker *iter = head;
     while(iter->next && iter->next != toDelete)
+    {
        iter = iter->next;
+       printk(KERN_INFO "\n next");
+    }
 
-    iter = toDelete->next;
+    iter->next = toDelete->next;
+}
+
+void printList (struct listTracker *head)
+{
+    struct flowStruct *new = (struct flowStruct *)head->next;
+    while(new)
+    {
+        printk (KERN_INFO "\n The value is %d", new->value);
+        new=(struct flowStruct *)new->next;
+    }
 }
 
 static struct listTracker *head;
@@ -73,7 +86,13 @@ int init_module (void)
 void cleanup_module (void)
 {
     printk(KERN_INFO "Inside Clean up of Hello World \n");
-
-    // To add clean up code;
+    struct flowStruct *new = (struct flowStruct *)head->next;
+    while(new)
+    {
+        deleteElement(head, (struct listTracker*)new);
+        kfree(new);
+        printList(head);
+    }
+    kfree(head);
 }
 
