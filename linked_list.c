@@ -57,7 +57,13 @@ int init_module (void)
         i++;
     }
 
-   
+    new = head->next;
+    while(new)
+    {
+        printk (KERN_INFO "Printing values %d", new->value);
+        new = new->next;
+    }
+
     printk (KERN_INFO "Before return Inside Init of Hello World \n");
     return 0;
 }
