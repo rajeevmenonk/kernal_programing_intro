@@ -15,7 +15,7 @@ struct listTracker
 
 struct flowStruct 
 {
-    struct flowStruct *next;
+    struct listTracker *next;
     int value;
 };
 
@@ -53,15 +53,16 @@ int init_module (void)
         printk (KERN_INFO "Adding element to linked list %d \n", i);
         new = kmalloc(sizeof(struct flowStruct), GFP_KERNEL);
         new->value = i*10;
-        insertElement(head, new);
+        new->next = NULL;
+        insertElement(head, (struct listTracker *)new);
         i++;
     }
 
-    new = head->next;
+    new = (struct FlowStruct *)head->next;
     while(new)
     {
-        printk (KERN_INFO "Printing values %d", new->value);
-        new = new->next;
+        printk (KERN_INFO "\n Printing values %d", new->value);
+        new = (struct FlowStruct *)new->next;
     }
 
     printk (KERN_INFO "Before return Inside Init of Hello World \n");
