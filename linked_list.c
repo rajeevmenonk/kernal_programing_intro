@@ -44,11 +44,12 @@ int init_module (void)
 {
     printk (KERN_INFO "Inside Init of Hello World \n");
     head = kmalloc(sizeof(struct listTracker), GFP_KERNEL);
+    head->next = NULL;
 
     struct flowStruct *new;
 
     int i = 0;
-    while(i < 2)
+    while(i < 5)
     {
         printk (KERN_INFO "Adding element to linked list %d \n", i);
         new = kmalloc(sizeof(struct flowStruct), GFP_KERNEL);
