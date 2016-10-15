@@ -8,21 +8,19 @@
 #include <net/arp.h>
 #include <net/sock.h>
 
-#define OF_SOURCE_IP 3232236546
-#define NEXT_HOP_IP_OF 3232236034
-
-void send_the_packet_out (struct sk_buff *skb)
+struct flowStruct 
 {
-    printk (KERN_INFO "Inside Init of Thread test %d \n", skb->len);
-}
-
-static struct task_struct *thread_new;
+    struct flowStruct *node;
+    int value;
+};
 int init_module (void)
 {
+    struct flowStruct a,b;
+    a.value = 10;
+    b.value = 20;
+    a.node = &b;
+
     printk (KERN_INFO "Inside Init of Hello World \n");
-    struct sk_buff *skb = kmalloc(sizeof(*skb), GFP_KERNEL);
-    skb->len = 100;
-    thread_new = kthread_run(&send_the_packet_out, skb, "testThread");
     return 0;
 }
 

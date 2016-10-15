@@ -1,0 +1,1 @@
+cmd_/home/rajeev/NCSU/Sem1/IP/practice/kernal_programing_intro/linked_list.ko := ld -r -m elf_i386 -T ./scripts/module-common.lds --build-id  -o /home/rajeev/NCSU/Sem1/IP/practice/kernal_programing_intro/linked_list.ko /home/rajeev/NCSU/Sem1/IP/practice/kernal_programing_intro/linked_list.o /home/rajeev/NCSU/Sem1/IP/practice/kernal_programing_intro/linked_list.mod.o
