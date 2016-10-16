@@ -15,23 +15,23 @@ struct flowStruct
 };
 
 void insertElement (struct list_head *head, 
+                    struct list_head *tail,
                     struct list_head *new)
 {
-    struct list_head *iter = head;
-    while(iter->next)
-        iter = iter->next;
+    if (!head->next)
+        head->next = new;
+    else
+        (tail->next)->next = new;
 
-    iter->next = new;
+    tail->next = new;
 }
 
 void deleteElement (struct list_head *head,
-                    struct list_head *toDelete)
+                    struct list_head *tail)
 {
-    struct list_head *iter = head;
-    while(iter->next && iter->next != toDelete)
-       iter = iter->next;
-
-    iter->next = toDelete->next;
+    head->next = (head->next)->next;
+    if(!head->next)
+        tail->next = NULL;
 }
 
 void printList (struct list_head *head)
@@ -46,6 +46,7 @@ void printList (struct list_head *head)
 
 static struct list_head head;
 static struct list_head tail;
+
 int init_module (void)
 {
     printk (KERN_INFO "Inside Init of Hello World \n");
@@ -61,7 +62,7 @@ int init_module (void)
         new = kmalloc(sizeof(struct flowStruct), GFP_KERNEL);
         new->value = i*10;
         new->next = NULL;
-        insertElement(&head, (struct list_head *)new);
+        insertElement(&head, &tail, (struct list_head *)new);
         i++;
     }
 
@@ -88,5 +89,25 @@ void cleanup_module (void)
         printList(&head);
         new = (struct flowStruct *)head.next;
     }
+    int i = 1;
+    while(i < 6)
+    {
+        printk (KERN_INFO "Adding element to linked list %d \n", i);
+        new = kmalloc(sizeof(struct flowStruct), GFP_KERNEL);
+        new->value = i*20;
+        new->next = NULL;
+        insertElement(&head, &tail, (struct list_head *)new);
+        i++;
+    }
+    new = (struct flowStruct *)head.next;
+    while(new)
+    {
+	printk(KERN_INFO "Value being deleted is %d \n", new->value);
+        deleteElement(&head, (struct list_head*)new);
+        kfree(new);
+        printList(&head);
+        new = (struct flowStruct *)head.next;
+    }
+
 }
 
