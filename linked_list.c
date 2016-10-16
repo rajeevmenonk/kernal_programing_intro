@@ -8,11 +8,6 @@
 #include <net/arp.h>
 #include <net/sock.h>
 
-struct listTracker
-{
-    struct listTracker *next;
-};
-
 struct flowStruct 
 {
     struct list_head *next;
@@ -36,9 +31,6 @@ void deleteElement (struct list_head *head,
     while(iter->next && iter->next != toDelete)
        iter = iter->next;
 
-    //if (!iter->next)
-    //    return;
-
     iter->next = toDelete->next;
 }
 
@@ -52,12 +44,13 @@ void printList (struct list_head *head)
     }
 }
 
-static struct list_head *head;
+static struct list_head head;
+static struct list_head tail;
 int init_module (void)
 {
     printk (KERN_INFO "Inside Init of Hello World \n");
-    head = kmalloc(sizeof(struct list_head), GFP_KERNEL);
-    head->next = NULL;
+    head.next = NULL;
+    tail.next = NULL;
 
     struct flowStruct *new;
 
@@ -68,11 +61,11 @@ int init_module (void)
         new = kmalloc(sizeof(struct flowStruct), GFP_KERNEL);
         new->value = i*10;
         new->next = NULL;
-        insertElement(head, (struct list_head *)new);
+        insertElement(&head, (struct list_head *)new);
         i++;
     }
 
-    new = (struct FlowStruct *)head->next;
+    new = (struct FlowStruct *)head.next;
     while(new)
     {
         printk (KERN_INFO "\n Printing values %d", new->value);
@@ -86,15 +79,15 @@ int init_module (void)
 void cleanup_module (void)
 {
     printk(KERN_INFO "Inside Clean up of Hello World \n");
-    struct flowStruct *new = (struct flowStruct *)head->next;
+    struct flowStruct *new = (struct flowStruct *)head.next;
     while(new)
     {
 	printk(KERN_INFO "Value being deleted is %d \n", new->value);
-        deleteElement(head, (struct list_head*)new);
+        deleteElement(&head, (struct list_head*)new);
         kfree(new);
-        printList(head);
-        new = (struct flowStruct *)head->next;
+        printList(&head);
+        new = (struct flowStruct *)head.next;
     }
-    kfree(head);
+    //kfree(&head);
 }
 
