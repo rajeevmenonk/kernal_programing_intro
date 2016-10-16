@@ -199,6 +199,7 @@ int match_values (struct ofp_match *matchQueue,
          }
          iter = (struct ofp_match *)iter->next;
      }
+     return 1;
 }
 
 unsigned int hook_func(const struct nf_hook_ops *ops,
@@ -208,11 +209,31 @@ unsigned int hook_func(const struct nf_hook_ops *ops,
                                int (*okfn)(struct sk_buff *))
 {
     struct iphdr *iph = ip_hdr(skb);
-    printk(KERN_INFO "INSIDE GET_PACKET_INFO %d %d %d\n", iph->daddr, ((struct tcphdr *)skb_transport_header(skb))->dest, ((struct ethhdr *)skb_mac_header(skb))->h_proto );
+    printk(KERN_INFO "INSIDE GET_PACKET_INFO %u %hu %u\n", iph->saddr, ntohs(tcp_hdr(skb)->dest), ntohs(((struct ethhdr *)skb_mac_header(skb))->h_proto) );
     return 1;
 }
 
 static struct nf_hook_ops nf_hook_open_flow;
+
+void insertElement (struct list_head *head, 
+                    struct list_head *tail,
+                    struct list_head *new)
+{
+    if (!head->next)
+        head->next = new;
+    else
+        (tail->next)->next = new;
+
+    tail->next = new;
+}
+
+void deleteElement (struct list_head *head,
+                    struct list_head *tail)
+{
+    head->next = (head->next)->next;
+    if(!head->next)
+        tail->next = NULL;
+}
 
 int init_module (void)
 {
