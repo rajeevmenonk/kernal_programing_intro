@@ -1,3 +1,8 @@
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/netfilter.h>
+#include <linux/netdevice.h>
+#include <linux/ip.h>
 
 // Match type
 enum ofp_match_type {
@@ -100,51 +105,111 @@ enum ofp_flow_mod_command
 
 // Flow match fields
 struct ofp_match {
-    uint16_t type; /* One of OFPMT_* */
-    uint16_t length; /* Length of ofp_match (excluding padding) */
-    // Add padding
-    uint8_t oxm_fields[4]; /* OXMs start here - Make compiler happy */
+    struct list_head *next;
+    __u16 class; /* One of OFPMT_* */
+    __u8 field;
+    __u8 hasMask;
+//    __u16 length; /* Length of ofp_match (excluding padding) */
+//    // Add padding
+//    __u8 oxm_fields[4]; /* OXMs start here - Make compiler happy */
+    union matchfield {
+        __u16 port;
+        __u32 ipAddress;
+        __u64 macAddress;
+    } value, mask;
 };
 
 // Instruction header.
 struct ofp_instruction {
-    uint16_t type; /* Instruction type */
-    uint16_t len; /* Length of this struct in bytes. */
+    __u16 type; /* Instruction type */
+    __u16 len; /* Length of this struct in bytes. */
 };
 
 //struct ofp_instruction_actions {
-//    uint16_t type; /* One of OFPIT_*_ACTIONS */
-//    uint16_t len; /* Length of this struct in bytes. */
-//    uint8_t pad[4]; /* Align to 64-bits */
+//    __u16 type; /* One of OFPIT_*_ACTIONS */
+//    __u16 len; /* Length of this struct in bytes. */
+//    __u8 pad[4]; /* Align to 64-bits */
 //    struct ofp_action_header actions[0]; /* Actions associated with OFPIT_WRITE_ACTIONS and OFPIT_APPLY_ACTIONS */
 //};
 
 struct ofp_flow_stats_request {
-    uint8_t table_id; /* ID of table to read (from ofp_table_stats), OFPTT_ALL for all tables. */
-    uint8_t pad[3]; /* Align to 32 bits. */
-    uint32_t out_port; /* Require matching entries to include this as an output port. A value of OFPP_ANY indicates no restriction. */
-    uint32_t out_group; /* Require matching entries to include this as an output group. A value of OFPG_ANY indicates no restriction. */
-    uint8_t pad2[4]; /* Align to 64 bits. */
-    uint64_t cookie; /* Require matching entries to contain this cookie value */
-    uint64_t cookie_mask; /* Mask used to restrict the cookie bits that must match. A value of 0 indicates no restriction. */
+    __u8 table_id; /* ID of table to read (from ofp_table_stats), OFPTT_ALL for all tables. */
+    __u8 pad[3]; /* Align to 32 bits. */
+    __u32 out_port; /* Require matching entries to include this as an output port. A value of OFPP_ANY indicates no restriction. */
+    __u32 out_group; /* Require matching entries to include this as an output group. A value of OFPG_ANY indicates no restriction. */
+    __u8 pad2[4]; /* Align to 64 bits. */
+    __u64 cookie; /* Require matching entries to contain this cookie value */
+    __u64 cookie_mask; /* Mask used to restrict the cookie bits that must match. A value of 0 indicates no restriction. */
     struct ofp_match match; /* Fields to match. Variable size. */
 };
 
 struct ofp_flow_table {
-    struct ofp_header header;
-    uint64_t cookie; /* Opaque controller-issued identifier. */
-    uint64_t cookie_mask; /* Mask used to restrict the cookie bits that must match when the command is OFPFC_MODIFY* or OFPFC_DELETE*. A value of 0 indicates no restriction. */
+    __u64 cookie; /* Opaque controller-issued identifier. */
+    __u64 cookie_mask; /* Mask used to restrict the cookie bits that must match when the command is OFPFC_MODIFY* or OFPFC_DELETE*. A value of 0 indicates no restriction. */
+
     /* Flow actions. */
-    uint8_t table_id;       /* ID of the table to put the flow in.  For OFPFC_DELETE_* commands, OFPTT_ALL can also be used to delete matching flows from all tables. */
-    uint8_t command;        /* One of OFPFC_*. */
-    uint16_t idle_timeout;  /* Idle time before discarding (seconds). */                                                                                                     
-    uint16_t hard_timeout;  /* Max time before discarding (seconds). */                                                                                                      
-    uint16_t priority;      /* Priority level of flow entry. */                                                                                                                 
-    uint32_t buffer_id;     /* Buffered packet to apply to, or OFP_NO_BUFFER.  Not meaningful for OFPFC_DELETE*. */                                                       
-    uint32_t out_port;      /* For OFPFC_DELETE* commands, require matching entries to include this as an output port. A value of OFPP_ANY indicates no restriction. */  
-    uint32_t out_group;     /* For OFPFC_DELETE* commands, require matching entries to include this as an output group. A value of OFPG_ANY indicates no restriction. */  
-    uint16_t flags;         /* One of OFPFF_*. */
-    uint8_t pad[2]; /* Fields to match. Variable size. */
-    struct ofp_match match; //struct ofp_instruction instructions[0]; /* Instruction set */
+    __u8 table_id;       /* ID of the table to put the flow in.  For OFPFC_DELETE_* commands, OFPTT_ALL can also be used to delete matching flows from all tables. */
+    __u8 command;        /* One of OFPFC_*. */
+    __u16 idle_timeout;  /* Idle time before discarding (seconds). */                                                                                                     
+    __u16 hard_timeout;  /* Max time before discarding (seconds). */                                                                                                      
+    __u16 priority;      /* Priority level of flow entry. */                                                                                                                 
+    __u32 buffer_id;     /* Buffered packet to apply to, or OFP_NO_BUFFER.  Not meaningful for OFPFC_DELETE*. */                                                       
+    __u32 out_port;      /* For OFPFC_DELETE* commands, require matching entries to include this as an output port. A value of OFPP_ANY indicates no restriction. */  
+    __u32 out_group;     /* For OFPFC_DELETE* commands, require matching entries to include this as an output group. A value of OFPG_ANY indicates no restriction. */  
+    __u16 flags;         /* One of OFPFF_*. */
+    __u8 pad[2]; /* Fields to match. Variable size. */
+    struct list_head *match; //struct ofp_instruction instructions[0]; /* Instruction set */
     struct ofp_instruction instructions[0]; /* Instruction set */
 };
+
+int match_values (struct ofp_match *matchQueue,
+                  struct sk_buff *skb)
+{
+     struct ofp_match *iter = matchQueue;
+     while(iter)
+     {
+         switch(iter->field)
+         {
+             case OFPXMT_OFB_ETH_TYPE:
+                 break;
+             case OFPXMT_OFB_IP_PROTO:
+                 break;
+             case OFPXMT_OFB_TCP_DST:
+                 break;
+
+         }
+         iter = (struct ofp_match *)iter->next;
+     }
+}
+
+unsigned int hook_func(const struct nf_hook_ops *ops,
+                               struct sk_buff *skb,
+                               const struct net_device *in,
+                               const struct net_device *out,
+                               int (*okfn)(struct sk_buff *))
+{
+    struct iphdr *iph = ip_hdr(skb);
+    printk(KERN_INFO "INSIDE GET_PACKET_INFO %s %d.%d.%d.%d\n", in->name, iph->daddr & 0xFF,(iph->daddr >> 8) & 0xFF, (iph->daddr >> 16) & 0xFF, (iph->daddr >> 24) & 0xFF);
+    return 1;
+}
+
+static struct nf_hook_ops nf_hook_open_flow;
+
+int init_module (void)
+{
+    nf_hook_open_flow.hook = hook_func;
+    nf_hook_open_flow.pf = PF_INET;
+    nf_hook_open_flow.hooknum = 0; // NF_IP_PRE_ROUTING
+    nf_hook_open_flow.priority = INT_MIN; // NF_IP_PRI_FIRST
+    nf_register_hook(&nf_hook_open_flow);
+
+    printk (KERN_INFO "Inside Init of Hello World \n");
+    return 0;
+}
+
+void cleanup_module (void)
+{
+    nf_unregister_hook(&nf_hook_open_flow);
+    printk(KERN_INFO "Inside Clean up of Hello World \n");
+}
+
