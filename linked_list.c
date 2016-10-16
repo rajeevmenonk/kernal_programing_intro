@@ -15,24 +15,24 @@ struct listTracker
 
 struct flowStruct 
 {
-    struct listTracker *next;
+    struct list_head *next;
     int value;
 };
 
-void insertElement (struct listTracker *head, 
-                    struct listTracker *new)
+void insertElement (struct list_head *head, 
+                    struct list_head *new)
 {
-    struct listTracker *iter = head;
+    struct list_head *iter = head;
     while(iter->next)
         iter = iter->next;
 
     iter->next = new;
 }
 
-void deleteElement (struct listTracker *head,
-                    struct listTracker *toDelete)
+void deleteElement (struct list_head *head,
+                    struct list_head *toDelete)
 {
-    struct listTracker *iter = head;
+    struct list_head *iter = head;
     while(iter->next && iter->next != toDelete)
        iter = iter->next;
 
@@ -42,7 +42,7 @@ void deleteElement (struct listTracker *head,
     iter->next = toDelete->next;
 }
 
-void printList (struct listTracker *head)
+void printList (struct list_head *head)
 {
     struct flowStruct *new = (struct flowStruct *)head->next;
     while(new)
@@ -52,11 +52,11 @@ void printList (struct listTracker *head)
     }
 }
 
-static struct listTracker *head;
+static struct list_head *head;
 int init_module (void)
 {
     printk (KERN_INFO "Inside Init of Hello World \n");
-    head = kmalloc(sizeof(struct listTracker), GFP_KERNEL);
+    head = kmalloc(sizeof(struct list_head), GFP_KERNEL);
     head->next = NULL;
 
     struct flowStruct *new;
@@ -68,7 +68,7 @@ int init_module (void)
         new = kmalloc(sizeof(struct flowStruct), GFP_KERNEL);
         new->value = i*10;
         new->next = NULL;
-        insertElement(head, (struct listTracker *)new);
+        insertElement(head, (struct list_head *)new);
         i++;
     }
 
@@ -90,7 +90,7 @@ void cleanup_module (void)
     while(new)
     {
 	printk(KERN_INFO "Value being deleted is %d \n", new->value);
-        deleteElement(head, (struct listTracker*)new);
+        deleteElement(head, (struct list_head*)new);
         kfree(new);
         printList(head);
         new = (struct flowStruct *)head->next;
