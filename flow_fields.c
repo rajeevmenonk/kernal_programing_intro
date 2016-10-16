@@ -115,7 +115,7 @@ struct ofp_match {
 //    // Add padding
 //    __u8 oxm_fields[4]; /* OXMs start here - Make compiler happy */
     union matchfield {
-        __u8 type;
+        __u16 type;
         __u16 port;
         __u32 ipAddress;
         __u64 macAddress;
@@ -202,6 +202,8 @@ int match_values (struct ofp_match *matchQueue,
      return 1;
 }
 
+static struct list_head head;
+static struct list_head tail;
 unsigned int hook_func(const struct nf_hook_ops *ops,
                                struct sk_buff *skb,
                                const struct net_device *in,
@@ -235,6 +237,29 @@ void deleteElement (struct list_head *head,
         tail->next = NULL;
 }
 
+void setupQueue( struct list_head *head, struct list_head *tail)
+{
+    struct ofp_match *new;
+    
+    new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new->next = NULL;
+    new->field = OFPXMT_OFB_ETH_TYPE;
+    new->value.type = 0x0800;
+    insertElement(head, tail, (struct list_head *)new);
+
+    new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new->next = NULL;
+    new->field = OFPXMT_OFB_IP_PROTO;
+    new->value.type = 6;
+    insertElement(head, tail, (struct list_head *)new);
+
+    new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new->next = NULL;
+    new->field = OFPXMT_OFB_TCP_DST;
+    new->value.port = 11111;
+    insertElement(head, tail, (struct list_head *)new);
+}
+
 int init_module (void)
 {
     nf_hook_open_flow.hook = hook_func;
@@ -244,6 +269,11 @@ int init_module (void)
     nf_register_hook(&nf_hook_open_flow);
 
     printk (KERN_INFO "Inside Init of Hello World \n");
+
+    head.next = NULL;
+    tail.next = NULL;
+    setupQueue(&head, &tail);
+
     return 0;
 }
 
