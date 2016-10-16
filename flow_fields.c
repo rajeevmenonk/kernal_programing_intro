@@ -169,37 +169,41 @@ struct ofp_flow_table {
 int match_values (struct ofp_match *matchQueue,
                   struct sk_buff *skb)
 {
-     struct ofp_match *iter = matchQueue;
+    struct ofp_match *iter = matchQueue;
 
-     while(iter)
-     {
-         switch(iter->field)
-         {
-             case OFPXMT_OFB_ETH_TYPE:
-                 if (((struct ethhdr *)skb_mac_header(skb))->h_proto == iter->value.type)
-                     break;
-
-                 // No match
-                 return 0;
-
-             case OFPXMT_OFB_IP_PROTO:
-                 if (ip_hdr(skb)->protocol == iter->value.type)
+    while(iter)
+    {
+        switch(iter->field)
+        {
+            case OFPXMT_OFB_ETH_TYPE:
+                if (((struct ethhdr *)skb_mac_header(skb))->h_proto == iter->value.type)
                     break;
 
-                 // No match
-                 return 0;
+                // No match
+                printk(KERN_INFO "No match 1" );
+                return 0;
 
-             case OFPXMT_OFB_TCP_DST:
-                 if (((struct tcphdr *)skb_transport_header(skb))->dest == iter->value.ipAddress)
-                     break;
+            case OFPXMT_OFB_IP_PROTO:
+                if (ip_hdr(skb)->protocol == iter->value.type)
+                   break;
 
-                 // No match
-                 return 0;
+                // No match
+                printk(KERN_INFO "No match 1" );
+                return 0;
 
-         }
-         iter = (struct ofp_match *)iter->next;
-     }
-     return 1;
+            case OFPXMT_OFB_TCP_DST:
+                if (((struct tcphdr *)skb_transport_header(skb))->dest == iter->value.ipAddress)
+                    break;
+
+                // No match
+                printk(KERN_INFO "No match 1" );
+                return 0;
+
+        }
+        iter = (struct ofp_match *)iter->next;
+    }
+    printk(KERN_INFO "SUCCESS" );
+    return 1;
 }
 
 static struct list_head head;
@@ -212,6 +216,9 @@ unsigned int hook_func(const struct nf_hook_ops *ops,
 {
     struct iphdr *iph = ip_hdr(skb);
     printk(KERN_INFO "INSIDE GET_PACKET_INFO %u %hu %u\n", iph->saddr, ntohs(tcp_hdr(skb)->dest), ntohs(((struct ethhdr *)skb_mac_header(skb))->h_proto) );
+
+    match_values( &head , skb);
+
     return 1;
 }
 
@@ -281,5 +288,14 @@ void cleanup_module (void)
 {
     nf_unregister_hook(&nf_hook_open_flow);
     printk(KERN_INFO "Inside Clean up of Hello World \n");
+
+    struct ofp_match *new = (struct ofp_match *)head.next;
+    while(new)
+    {
+        deleteElement(&head, (struct list_head*)new);
+        kfree(new);
+        new = (struct ofp_match *)head.next;
+    }
 }
+
 
