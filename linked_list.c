@@ -88,6 +88,5 @@ void cleanup_module (void)
         printList(&head);
         new = (struct flowStruct *)head.next;
     }
-    //kfree(&head);
 }
 
