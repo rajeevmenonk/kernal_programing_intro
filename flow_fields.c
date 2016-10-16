@@ -3,7 +3,9 @@
 #include <linux/netfilter.h>
 #include <linux/netdevice.h>
 #include <linux/ip.h>
+#include <linux/tcp.h>
 
+#define DEST_ADDR_FOR_TEST 123455
 // Match type
 enum ofp_match_type {
     OFPMT_STANDARD = 0, /* Deprecated. */
@@ -113,6 +115,7 @@ struct ofp_match {
 //    // Add padding
 //    __u8 oxm_fields[4]; /* OXMs start here - Make compiler happy */
     union matchfield {
+        __u8 type;
         __u16 port;
         __u32 ipAddress;
         __u64 macAddress;
@@ -162,20 +165,36 @@ struct ofp_flow_table {
     struct ofp_instruction instructions[0]; /* Instruction set */
 };
 
+// Verify if flow matches with the entries in the queue.
 int match_values (struct ofp_match *matchQueue,
                   struct sk_buff *skb)
 {
      struct ofp_match *iter = matchQueue;
+
      while(iter)
      {
          switch(iter->field)
          {
              case OFPXMT_OFB_ETH_TYPE:
-                 break;
+                 if (((struct ethhdr *)skb_mac_header(skb))->h_proto == iter->value.type)
+                     break;
+
+                 // No match
+                 return 0;
+
              case OFPXMT_OFB_IP_PROTO:
-                 break;
+                 if (ip_hdr(skb)->protocol == iter->value.type)
+                    break;
+
+                 // No match
+                 return 0;
+
              case OFPXMT_OFB_TCP_DST:
-                 break;
+                 if (((struct tcphdr *)skb_transport_header(skb))->dest == iter->value.ipAddress)
+                     break;
+
+                 // No match
+                 return 0;
 
          }
          iter = (struct ofp_match *)iter->next;
@@ -189,7 +208,7 @@ unsigned int hook_func(const struct nf_hook_ops *ops,
                                int (*okfn)(struct sk_buff *))
 {
     struct iphdr *iph = ip_hdr(skb);
-    printk(KERN_INFO "INSIDE GET_PACKET_INFO %s %d.%d.%d.%d\n", in->name, iph->daddr & 0xFF,(iph->daddr >> 8) & 0xFF, (iph->daddr >> 16) & 0xFF, (iph->daddr >> 24) & 0xFF);
+    printk(KERN_INFO "INSIDE GET_PACKET_INFO %d %d %d\n", iph->daddr, ((struct tcphdr *)skb_transport_header(skb))->dest, ((struct ethhdr *)skb_mac_header(skb))->h_proto );
     return 1;
 }
 
