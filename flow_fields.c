@@ -235,7 +235,7 @@ unsigned int hook_func(const struct nf_hook_ops *ops,
     printk(KERN_INFO "INSIDE GET_PACKET_INFO %u %hu %u\n", iph->saddr, ntohs(tcp_hdr(skb)->dest), ntohs(((struct ethhdr *)skb_mac_header(skb))->h_proto) );
 
     //match_values( &head , skb);
-    match_for_flow(&flow_head, skb);
+    //match_for_flow(&flow_head, skb);
 
     return 1;
 }
@@ -304,13 +304,14 @@ int init_module (void)
     struct ofp_flow_table *new;
     new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
     new->next = NULL;
+    new->match->next = NULL;
     insertElement(&flow_head, &flow_tail, (struct list_head *)new);
     setupQueue(new->match, &tail, 11111);
 
-    new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
-    new->next = NULL;
-    insertElement(&flow_head, &flow_tail, (struct list_head *)new);
-    setupQueue(new->match, &tail2, 11112);
+    //new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
+    //new->next = NULL;
+    //insertElement(&flow_head, &flow_tail, (struct list_head *)new);
+    //setupQueue(new->match, &tail2, 11112);
 
     return 0;
 }
