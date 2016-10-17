@@ -180,7 +180,7 @@ int match_values (struct ofp_match *matchQueue,
                     break;
 
                 // No match
-                printk(KERN_INFO "No match 1" );
+                printk(KERN_INFO "No match 1 %u %u ", ((struct ethhdr *)skb_mac_header(skb))->h_proto, iter->value.type );
                 return 0;
 
             case OFPXMT_OFB_IP_PROTO:
@@ -188,7 +188,7 @@ int match_values (struct ofp_match *matchQueue,
                    break;
 
                 // No match
-                printk(KERN_INFO "No match 1" );
+                printk(KERN_INFO "No match 2" );
                 return 0;
 
             case OFPXMT_OFB_TCP_DST:
@@ -196,7 +196,7 @@ int match_values (struct ofp_match *matchQueue,
                     break;
 
                 // No match
-                printk(KERN_INFO "No match 1" );
+                printk(KERN_INFO "No match 3" );
                 return 0;
 
         }
@@ -244,14 +244,14 @@ void deleteElement (struct list_head *head,
         tail->next = NULL;
 }
 
-void setupQueue( struct list_head *head, struct list_head *tail)
+void setupQueue( struct list_head *head, struct list_head *tail, int port)
 {
     struct ofp_match *new;
     
     new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
     new->next = NULL;
     new->field = OFPXMT_OFB_ETH_TYPE;
-    new->value.type = 0x0800;
+    new->value.type = htons(0x0800);
     insertElement(head, tail, (struct list_head *)new);
 
     new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
@@ -263,7 +263,7 @@ void setupQueue( struct list_head *head, struct list_head *tail)
     new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
     new->next = NULL;
     new->field = OFPXMT_OFB_TCP_DST;
-    new->value.port = 11111;
+    new->value.port = htons(11111);
     insertElement(head, tail, (struct list_head *)new);
 }
 
@@ -279,7 +279,8 @@ int init_module (void)
 
     head.next = NULL;
     tail.next = NULL;
-    setupQueue(&head, &tail);
+    setupQueue(&head, &tail, 11111);
+    //setupQueue(&head, &tail, 11112);
 
     return 0;
 }
