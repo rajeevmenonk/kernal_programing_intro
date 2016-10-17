@@ -211,6 +211,7 @@ int match_for_flow (struct list_head *head, struct sk_buff *skb)
     struct ofp_flow_table *iter = (struct ofp_flow_table *)head->next;
     while(iter)
     {
+        printk (KERN_INFO "TEST");
         if (match_values((struct ofp_match *)iter->match, skb))
             return 1;
 
@@ -235,7 +236,7 @@ unsigned int hook_func(const struct nf_hook_ops *ops,
     printk(KERN_INFO "INSIDE GET_PACKET_INFO %u %hu %u\n", iph->saddr, ntohs(tcp_hdr(skb)->dest), ntohs(((struct ethhdr *)skb_mac_header(skb))->h_proto) );
 
     //match_values( &head , skb);
-    //match_for_flow(&flow_head, skb);
+    match_for_flow(&flow_head, skb);
 
     return 1;
 }
@@ -301,17 +302,17 @@ int init_module (void)
     flow_head.next = NULL;
     flow_tail.next = NULL;
     
-    struct ofp_flow_table *new;
+    struct ofp_flow_table *new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
+    new->next = NULL;
+    new->match->next = NULL;
+    setupQueue(new->match, &tail, 11111);
+    insertElement(&flow_head, &flow_tail, (struct list_head *)new);
+
     new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
     new->next = NULL;
     new->match->next = NULL;
+    setupQueue(new->match, &tail2, 11112);
     insertElement(&flow_head, &flow_tail, (struct list_head *)new);
-    setupQueue(new->match, &tail, 11111);
-
-    //new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
-    //new->next = NULL;
-    //insertElement(&flow_head, &flow_tail, (struct list_head *)new);
-    //setupQueue(new->match, &tail2, 11112);
 
     return 0;
 }
@@ -321,13 +322,13 @@ void cleanup_module (void)
     nf_unregister_hook(&nf_hook_open_flow);
     printk(KERN_INFO "Inside Clean up of Hello World \n");
 
-    struct ofp_match *new = (struct ofp_match *)head.next;
-    while(new)
-    {
-        deleteElement(&head, (struct list_head*)new);
-        kfree(new);
-        new = (struct ofp_match *)head.next;
-    }
+    //struct ofp_match *new = (struct ofp_match *)head.next;
+    //while(new)
+    //{
+    //    deleteElement(&head, (struct list_head*)new);
+    //    kfree(new);
+    //    new = (struct ofp_match *)head.next;
+    //}
 }
 
 
