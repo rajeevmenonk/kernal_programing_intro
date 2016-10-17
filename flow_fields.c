@@ -5,7 +5,6 @@
 #include <linux/ip.h>
 #include <linux/tcp.h>
 
-#define DEST_ADDR_FOR_TEST 123455
 // Match type
 enum ofp_match_type {
     OFPMT_STANDARD = 0, /* Deprecated. */
@@ -147,6 +146,7 @@ struct ofp_flow_stats_request {
 };
 
 struct ofp_flow_table {
+    struct list_head *next;
     __u64 cookie; /* Opaque controller-issued identifier. */
     __u64 cookie_mask; /* Mask used to restrict the cookie bits that must match when the command is OFPFC_MODIFY* or OFPFC_DELETE*. A value of 0 indicates no restriction. */
 
@@ -206,8 +206,24 @@ int match_values (struct ofp_match *matchQueue,
     return 1;
 }
 
+int match_for_flow (struct ofp_flow_table* head, struct sk_buffer *skb)
+{
+    struct ofp_flow_table *iter = head->next;
+    while(iter)
+    {
+        if (match_values(iter->match, skb))
+            return 1;
+
+        iter=iter->next;
+    }
+    return 0;
+}
+
 static struct list_head head;
 static struct list_head tail;
+static struct list_head flow_head;
+static struct list_head flow_tail;
+
 unsigned int hook_func(const struct nf_hook_ops *ops,
                                struct sk_buff *skb,
                                const struct net_device *in,
@@ -217,7 +233,8 @@ unsigned int hook_func(const struct nf_hook_ops *ops,
     struct iphdr *iph = ip_hdr(skb);
     printk(KERN_INFO "INSIDE GET_PACKET_INFO %u %hu %u\n", iph->saddr, ntohs(tcp_hdr(skb)->dest), ntohs(((struct ethhdr *)skb_mac_header(skb))->h_proto) );
 
-    match_values( &head , skb);
+    //match_values( &head , skb);
+    match_for_flow(&flow_head, skb);
 
     return 1;
 }
@@ -279,8 +296,17 @@ int init_module (void)
 
     head.next = NULL;
     tail.next = NULL;
-    setupQueue(&head, &tail, 11111);
-    //setupQueue(&head, &tail, 11112);
+    
+    struct ofp_flow_table *new;
+    new = kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new->next = NULL;
+    insertElement(&flow_head, &flow_tail, (struct list_head *)new);
+    setupQueue(new->match, &tail, 11111);
+
+    new = kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new->next = NULL;
+    insertElement(&flow_head, &flow_tail, (struct list_head *)new);
+    setupQueue(&head, &tail, 11112);
 
     return 0;
 }
