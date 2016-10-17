@@ -206,21 +206,22 @@ int match_values (struct ofp_match *matchQueue,
     return 1;
 }
 
-int match_for_flow (struct ofp_flow_table* head, struct sk_buffer *skb)
+int match_for_flow (struct list_head *head, struct sk_buff *skb)
 {
-    struct ofp_flow_table *iter = head->next;
+    struct ofp_flow_table *iter = (struct ofp_flow_table *)head->next;
     while(iter)
     {
-        if (match_values(iter->match, skb))
+        if (match_values((struct ofp_match *)iter->match, skb))
             return 1;
 
-        iter=iter->next;
+        iter=(struct ofp_flow_table*)iter->next;
     }
     return 0;
 }
 
 static struct list_head head;
 static struct list_head tail;
+static struct list_head tail2;
 static struct list_head flow_head;
 static struct list_head flow_tail;
 
@@ -261,7 +262,7 @@ void deleteElement (struct list_head *head,
         tail->next = NULL;
 }
 
-void setupQueue( struct list_head *head, struct list_head *tail, int port)
+void setupQueue( struct list_head *head, struct list_head *tail, __u16 port)
 {
     struct ofp_match *new;
     
@@ -280,7 +281,7 @@ void setupQueue( struct list_head *head, struct list_head *tail, int port)
     new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
     new->next = NULL;
     new->field = OFPXMT_OFB_TCP_DST;
-    new->value.port = htons(11111);
+    new->value.port = htons(port);
     insertElement(head, tail, (struct list_head *)new);
 }
 
@@ -296,17 +297,20 @@ int init_module (void)
 
     head.next = NULL;
     tail.next = NULL;
+    tail2.next = NULL;
+    flow_head.next = NULL;
+    flow_tail.next = NULL;
     
     struct ofp_flow_table *new;
-    new = kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
     new->next = NULL;
     insertElement(&flow_head, &flow_tail, (struct list_head *)new);
     setupQueue(new->match, &tail, 11111);
 
-    new = kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
     new->next = NULL;
     insertElement(&flow_head, &flow_tail, (struct list_head *)new);
-    setupQueue(&head, &tail, 11112);
+    setupQueue(new->match, &tail2, 11112);
 
     return 0;
 }
