@@ -305,24 +305,26 @@ int init_module (void)
     
     struct ofp_flow_table *new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
     new->next = NULL;
+    new->match =  kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
     new->match->next = NULL;
     setupQueue(new->match, &tail, 11111);
     insertElement(&flow_head, &flow_tail, (struct list_head *)new);
 
     new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
     new->next = NULL;
+    new->match =  kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
     new->match->next = NULL;
     setupQueue(new->match, &tail2, 11112);
     insertElement(&flow_head, &flow_tail, (struct list_head *)new);
 
     struct ofp_flow_table *iter = (struct ofp_flow_table *)flow_head.next;
-    int i = 0;
-    while(iter)
-    {
-        i++;
-        iter = (struct ofp_flow_table *)iter->next;
-    }
-    printk(KERN_INFO "TESTING FOR INSERT %d", i);
+    //int i = 0;
+    //while(iter)
+    //{
+    //    i++;
+    //    iter = (struct ofp_flow_table *)iter->next;
+    //}
+    //printk(KERN_INFO "TESTING FOR INSERT %d", i);
     return 0;
 }
 
