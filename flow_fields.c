@@ -206,6 +206,13 @@ int match_values (struct ofp_match *matchQueue,
     return 1;
 }
 
+static struct list_head head;
+static struct list_head tail;
+static struct list_head tail2;
+static struct list_head flow_head;
+static struct list_head flow_tail;
+
+
 int match_for_flow (struct list_head *head, struct sk_buff *skb)
 {
     struct ofp_flow_table *iter = (struct ofp_flow_table *)head->next;
@@ -219,12 +226,6 @@ int match_for_flow (struct list_head *head, struct sk_buff *skb)
     }
     return 0;
 }
-
-static struct list_head head;
-static struct list_head tail;
-static struct list_head tail2;
-static struct list_head flow_head;
-static struct list_head flow_tail;
 
 unsigned int hook_func(const struct nf_hook_ops *ops,
                                struct sk_buff *skb,
@@ -314,6 +315,14 @@ int init_module (void)
     setupQueue(new->match, &tail2, 11112);
     insertElement(&flow_head, &flow_tail, (struct list_head *)new);
 
+    struct ofp_flow_table *iter = (struct ofp_flow_table *)flow_head.next;
+    int i = 0;
+    while(iter)
+    {
+        i++;
+        iter = (struct ofp_flow_table *)iter->next;
+    }
+    printk(KERN_INFO "TESTING FOR INSERT %d", i);
     return 0;
 }
 
