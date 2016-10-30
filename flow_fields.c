@@ -122,13 +122,12 @@ struct ofp_match {
         unsigned char ethernetAddress[ETH_ALEN]; // ETH_ALEN = 6
         char          interface_name[IFNAMSIZ];
         __u8          dscpField; // Expected with the value right shifted to right twice.
-        __u8          icmp_type;
-        __u8          icmp_code;
+        __u8          icmpType;
+        __u8          icmpCode;
         __u16         ethernetProtocol;
         __u16         ipProtocol;
         __u16         port;
         __be32        ipAddress;
-        __u64         macAddress;
     }                 value, mask;
 };
 
@@ -287,13 +286,13 @@ int match_values (struct ofp_match *matchQueue,
             }
             case OFPXMT_OFB_ICMPV4_TYPE:
             {
-                if(icmp_hdr(skb)->type == iter->value.icmp_type)
+                if(icmp_hdr(skb)->type == iter->value.icmpType)
                     break;
                 return 0;
             }
             case OFPXMT_OFB_ICMPV4_CODE:
             {
-                if(icmp_hdr(skb)->code == iter->value.icmp_code)
+                if(icmp_hdr(skb)->code == iter->value.icmpCode)
                     break;
                 return 0;
             }
@@ -343,7 +342,6 @@ int match_for_flow (struct list_head *head, struct sk_buff *skb)
     struct ofp_flow_table *iter = (struct ofp_flow_table *)head->next;
     while(iter)
     {
-        printk (KERN_INFO "TEST");
         if (match_values((struct ofp_match *)iter->match, skb))
             return 1;
 
@@ -358,8 +356,8 @@ unsigned int hook_func(const struct nf_hook_ops *ops,
                                const struct net_device *out,
                                int (*okfn)(struct sk_buff *))
 {
-    struct iphdr *iph = ip_hdr(skb);
-    printk(KERN_INFO "INSIDE GET_PACKET_INFO %u %hu %u\n", iph->saddr, ntohs(tcp_hdr(skb)->dest), ntohs(((struct ethhdr *)skb_mac_header(skb))->h_proto) );
+    //struct iphdr *iph = ip_hdr(skb);
+    //printk(KERN_INFO "INSIDE GET_PACKET_INFO %u %hu %u\n", iph->saddr, ntohs(tcp_hdr(skb)->dest), ntohs(((struct ethhdr *)skb_mac_header(skb))->h_proto) );
 
     //match_values( &head , skb);
     match_for_flow(&flow_head, skb);
@@ -387,6 +385,85 @@ void deleteElement (struct list_head *head,
     head->next = (head->next)->next;
     if(!head->next)
         tail->next = NULL;
+}
+
+void setupICMPFilter (struct list_head *head,
+                      struct list_head *tail)
+{
+    struct ofp_match *new;
+
+    new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new->next = NULL;
+    new->field = OFPXMT_OFB_ETH_SRC;
+    new->value.ethernetAddress[0] = 0x00;
+    new->value.ethernetAddress[1] = 0x50;
+    new->value.ethernetAddress[2] = 0x56;
+    new->value.ethernetAddress[3] = 0x08;
+    new->value.ethernetAddress[4] = 0xaa;
+    new->value.ethernetAddress[5] = 0x23;
+    new->mask.ethernetAddress[0] = 0xff;
+    new->mask.ethernetAddress[1] = 0xff;
+    new->mask.ethernetAddress[2] = 0xff;
+    new->mask.ethernetAddress[3] = 0xff;
+    new->mask.ethernetAddress[4] = 0xff;
+    new->mask.ethernetAddress[5] = 0xff;
+    insertElement(head, tail, (struct list_head *)new);
+
+    new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new->next = NULL;
+    new->field = OFPXMT_OFB_ETH_DST;
+    new->value.ethernetAddress[0] = 0x00;
+    new->value.ethernetAddress[1] = 0x00;
+    new->value.ethernetAddress[2] = 0x00;
+    new->value.ethernetAddress[3] = 0x00;
+    new->value.ethernetAddress[4] = 0x00;
+    new->value.ethernetAddress[5] = 0x00;
+    new->mask.ethernetAddress[0] = 0x00;
+    new->mask.ethernetAddress[1] = 0x00;
+    new->mask.ethernetAddress[2] = 0x00;
+    new->mask.ethernetAddress[3] = 0x00;
+    new->mask.ethernetAddress[4] = 0x00;
+    new->mask.ethernetAddress[5] = 0x00;
+    insertElement(head, tail, (struct list_head *)new);
+
+    new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new->next = NULL;
+    new->field = OFPXMT_OFB_ETH_TYPE;
+    new->value.ethernetProtocol = htons(0x0800);
+    insertElement(head, tail, (struct list_head *)new);
+
+    new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new->next = NULL;
+    new->field = OFPXMT_OFB_IPV4_SRC;
+    new->value.ipAddress = htonl(2553156212); // 152.46.18.116
+    new->mask.ipAddress = 0;
+    insertElement(head, tail, (struct list_head *)new);
+
+    new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new->next = NULL;
+    new->field = OFPXMT_OFB_IPV4_DST;
+    new->value.ipAddress = 0;
+    new->mask.ipAddress = 0xffffffff;
+    insertElement(head, tail, (struct list_head *)new);
+
+    new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new->next = NULL;
+    new->field = OFPXMT_OFB_IP_PROTO;
+    new->value.ipProtocol = 1; // ICMP
+    insertElement(head, tail, (struct list_head *)new);
+
+
+    new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new->next = NULL;
+    new->field = OFPXMT_OFB_ICMPV4_TYPE;
+    new->value.icmpType = ICMP_ECHOREPLY;
+    insertElement(head, tail, (struct list_head *)new);
+
+    new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    new->next = NULL;
+    new->field = OFPXMT_OFB_ICMPV4_CODE;
+    new->value.icmpCode = 0;
+    insertElement(head, tail, (struct list_head *)new);
 }
 
 void setupQueue( struct list_head *head, struct list_head *tail, __u16 port)
@@ -432,7 +509,8 @@ int init_module (void)
     new->next = NULL;
     new->match =  kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
     new->match->next = NULL;
-    setupQueue(new->match, &tail, 11111);
+    setupICMPFilter(new->match, &tail);
+    //setupQueue(new->match, &tail, 11111);
     insertElement(&flow_head, &flow_tail, (struct list_head *)new);
 
     new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
