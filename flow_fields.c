@@ -2,8 +2,12 @@
 #include <linux/kernel.h>
 #include <linux/netfilter.h>
 #include <linux/netdevice.h>
+#include <linux/if_ether.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>
+#include <linux/udp.h>
+#include <linux/sctp.h>
+#include <linux/icmp.h>
 
 // Match type
 enum ofp_match_type {
@@ -106,19 +110,26 @@ enum ofp_flow_mod_command
 
 // Flow match fields
 struct ofp_match {
-    struct list_head *next;
-    __u16 class; /* One of OFPMT_* */
-    __u8 field;
-    __u8 hasMask;
+    struct list_head  *next;
+    __u16             class; /* One of OFPMT_* */
+    __u8              field;
+    __u8              hasMask;
+
 //    __u16 length; /* Length of ofp_match (excluding padding) */
 //    // Add padding
 //    __u8 oxm_fields[4]; /* OXMs start here - Make compiler happy */
     union matchfield {
-        __u16 type;
-        __u16 port;
-        __u32 ipAddress;
-        __u64 macAddress;
-    } value, mask;
+        unsigned char ethernetAddress[ETH_ALEN];
+        char          interface_name[IFNAMSIZ];
+        __u8          dscpField; // Expected with the value right shifted to right twice.
+        __u8          icmp_type;
+        __u8          icmp_code;
+        __u16         ethernetProtocol;
+        __u16         ipProtocol;
+        __u16         port;
+        __be32        ipAddress;
+        __u64         macAddress;
+    }                 value, mask;
 };
 
 // Instruction header.
@@ -175,28 +186,132 @@ int match_values (struct ofp_match *matchQueue,
     {
         switch(iter->field)
         {
+            case OFPXMT_OFB_IN_PHY_PORT:
+            {
+                if (strcmp((skb->dev)->name,
+                           iter->value.interface_name) == 0)
+                    break;
+                return 0;
+            }
+            case OFPXMT_OFB_ETH_DST:
+            {
+                if (memcmp( eth_hdr(skb)->h_dest, 
+                            iter->value.ethernetAddress,
+                            ETH_ALEN) == 0)
+                    break;
+                return 0;
+            }
+            case OFPXMT_OFB_ETH_SRC:
+            {
+                if (memcmp( eth_hdr(skb)->h_source, 
+                            iter->value.ethernetAddress,
+                            ETH_ALEN) == 0)
+                    break;
+                return 0;
+            }
             case OFPXMT_OFB_ETH_TYPE:
-                if (((struct ethhdr *)skb_mac_header(skb))->h_proto == iter->value.type)
+            {
+                if (eth_hdr(skb)->h_proto == iter->value.ethernetProtocol)
                     break;
-
-                // No match
-                printk(KERN_INFO "No match 1 %u %u ", ((struct ethhdr *)skb_mac_header(skb))->h_proto, iter->value.type );
                 return 0;
-
+            }
+            case OFPXMT_OFB_IP_DSCP:
+            {
+                if ((ip_hdr(skb)->tos >> 2) == iter->value.dscpField)
+                    break;
+                return 0;
+            }
             case OFPXMT_OFB_IP_PROTO:
-                if (ip_hdr(skb)->protocol == iter->value.type)
+            {
+                if (ip_hdr(skb)->protocol == iter->value.ipProtocol)
                    break;
-
-                // No match
-                printk(KERN_INFO "No match 2" );
                 return 0;
-
-            case OFPXMT_OFB_TCP_DST:
-                if (((struct tcphdr *)skb_transport_header(skb))->dest == iter->value.ipAddress)
+            }
+            case OFPXMT_OFB_IPV4_SRC:
+            {
+                if (ip_hdr(skb)->saddr == iter->value.ipAddress)
                     break;
-
-                // No match
-                printk(KERN_INFO "No match 3" );
+                return 0;
+            }
+            case OFPXMT_OFB_IPV4_DST:
+            {
+                if (ip_hdr(skb)->daddr == iter->value.ipAddress)
+                    break;
+                return 0;
+            }
+            case OFPXMT_OFB_TCP_SRC:
+            {
+                if (tcp_hdr(skb)->source == iter->value.port)
+                    break;
+                return 0;
+            }
+            case OFPXMT_OFB_TCP_DST:
+            {
+                if (tcp_hdr(skb)->dest == iter->value.port)
+                    break;
+                return 0;
+            }
+            case OFPXMT_OFB_UDP_SRC:
+            {
+                if (udp_hdr(skb)->source == iter->value.port)
+                    break;
+                return 0;
+            }
+            case OFPXMT_OFB_UDP_DST:
+            {
+                if (udp_hdr(skb)->dest == iter->value.port)
+                    break;
+                return 0;
+            }
+            case OFPXMT_OFB_SCTP_SRC:
+            {
+                if (sctp_hdr(skb)->source == iter->value.port)
+                    break;
+                return 0;
+            }
+            case OFPXMT_OFB_SCTP_DST:
+            {
+                if (sctp_hdr(skb)->dest == iter->value.port)
+                    break;
+                return 0;
+            }
+            case OFPXMT_OFB_ICMPV4_TYPE:
+            {
+                if(icmp_hdr(skb)->type == iter->value.icmp_type)
+                    break;
+                return 0;
+            }
+            case OFPXMT_OFB_ICMPV4_CODE:
+            {
+                if(icmp_hdr(skb)->code == iter->value.icmp_code)
+                    break;
+                return 0;
+            }
+            case OFPXMT_OFB_IN_PORT:
+            case OFPXMT_OFB_METADATA:
+            case OFPXMT_OFB_VLAN_VID:
+            case OFPXMT_OFB_VLAN_PCP:
+            case OFPXMT_OFB_IP_ECN:
+            case OFPXMT_OFB_ARP_OP:
+            case OFPXMT_OFB_ARP_SPA:
+            case OFPXMT_OFB_ARP_TPA:
+            case OFPXMT_OFB_ARP_SHA:
+            case OFPXMT_OFB_ARP_THA:
+            case OFPXMT_OFB_IPV6_SRC:
+            case OFPXMT_OFB_IPV6_DST:
+            case OFPXMT_OFB_IPV6_FLABEL:
+            case OFPXMT_OFB_ICMPV6_TYPE:
+            case OFPXMT_OFB_ICMPV6_CODE:
+            case OFPXMT_OFB_IPV6_ND_TARGET:
+            case OFPXMT_OFB_IPV6_ND_SLL:
+            case OFPXMT_OFB_IPV6_ND_TLL:
+            case OFPXMT_OFB_MPLS_LABEL:
+            case OFPXMT_OFB_MPLS_TC:
+            case OFPXMT_OFP_MPLS_BOS:
+            case OFPXMT_OFB_PBB_ISID:
+            case OFPXMT_OFB_TUNNEL_ID:
+            case OFPXMT_OFB_IPV6_EXTHDR:
+            default:
                 return 0;
 
         }
@@ -271,13 +386,13 @@ void setupQueue( struct list_head *head, struct list_head *tail, __u16 port)
     new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
     new->next = NULL;
     new->field = OFPXMT_OFB_ETH_TYPE;
-    new->value.type = htons(0x0800);
+    new->value.ethernetProtocol = htons(0x0800);
     insertElement(head, tail, (struct list_head *)new);
 
     new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
     new->next = NULL;
     new->field = OFPXMT_OFB_IP_PROTO;
-    new->value.type = 6;
+    new->value.ipProtocol = 6;
     insertElement(head, tail, (struct list_head *)new);
 
     new= kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
@@ -317,7 +432,7 @@ int init_module (void)
     setupQueue(new->match, &tail2, 11112);
     insertElement(&flow_head, &flow_tail, (struct list_head *)new);
 
-    struct ofp_flow_table *iter = (struct ofp_flow_table *)flow_head.next;
+    //struct ofp_flow_table *iter = (struct ofp_flow_table *)flow_head.next;
     //int i = 0;
     //while(iter)
     //{
