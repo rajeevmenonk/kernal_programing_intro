@@ -176,6 +176,16 @@ struct ofp_flow_table {
     struct ofp_instruction instructions[0]; /* Instruction set */
 };
 
+struct transportHeader {
+    __be16 source;
+    __be16 dest;
+};
+
+struct transportHeader* trans_hdr(const struct sk_buff *skb)
+{
+    return (struct transportHeader *)skb_transport_header(skb);
+}
+
 // Verify if flow matches with the entries in the queue.
 int match_values (struct ofp_match *matchQueue,
                   struct sk_buff *skb)
@@ -240,38 +250,18 @@ int match_values (struct ofp_match *matchQueue,
                 return 0;
             }
             case OFPXMT_OFB_TCP_SRC:
+            case OFPXMT_OFB_UDP_SRC:
+            case OFPXMT_OFB_SCTP_SRC:
             {
-                if (tcp_hdr(skb)->source == iter->value.port)
+                if (trans_hdr(skb)->source == iter->value.port)
                     break;
                 return 0;
             }
             case OFPXMT_OFB_TCP_DST:
-            {
-                if (tcp_hdr(skb)->dest == iter->value.port)
-                    break;
-                return 0;
-            }
-            case OFPXMT_OFB_UDP_SRC:
-            {
-                if (udp_hdr(skb)->source == iter->value.port)
-                    break;
-                return 0;
-            }
             case OFPXMT_OFB_UDP_DST:
-            {
-                if (udp_hdr(skb)->dest == iter->value.port)
-                    break;
-                return 0;
-            }
-            case OFPXMT_OFB_SCTP_SRC:
-            {
-                if (sctp_hdr(skb)->source == iter->value.port)
-                    break;
-                return 0;
-            }
             case OFPXMT_OFB_SCTP_DST:
             {
-                if (sctp_hdr(skb)->dest == iter->value.port)
+                if (trans_hdr(skb)->dest == iter->value.port)
                     break;
                 return 0;
             }
