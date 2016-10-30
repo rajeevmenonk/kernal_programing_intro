@@ -119,7 +119,7 @@ struct ofp_match {
 //    // Add padding
 //    __u8 oxm_fields[4]; /* OXMs start here - Make compiler happy */
     union matchfield {
-        unsigned char ethernetAddress[ETH_ALEN];
+        unsigned char ethernetAddress[ETH_ALEN]; // ETH_ALEN = 6
         char          interface_name[IFNAMSIZ];
         __u8          dscpField; // Expected with the value right shifted to right twice.
         __u8          icmp_type;
@@ -205,7 +205,16 @@ int match_values (struct ofp_match *matchQueue,
             }
             case OFPXMT_OFB_ETH_DST:
             {
-                if (memcmp( eth_hdr(skb)->h_dest, 
+                unsigned char etherAddr[ETH_ALEN];
+                __u8 byteIndex = 0;
+                while (byteIndex < ETH_ALEN)
+                {
+                    etherAddr[byteIndex] = eth_hdr(skb)->h_dest[byteIndex] && 
+                                           iter->mask.ethernetAddress[byteIndex];
+                    byteIndex++;
+                }
+                
+                if (memcmp( etherAddr, 
                             iter->value.ethernetAddress,
                             ETH_ALEN) == 0)
                     break;
@@ -213,7 +222,16 @@ int match_values (struct ofp_match *matchQueue,
             }
             case OFPXMT_OFB_ETH_SRC:
             {
-                if (memcmp( eth_hdr(skb)->h_source, 
+                unsigned char etherAddr[ETH_ALEN];
+                __u8 byteIndex = 0;
+                while (byteIndex < ETH_ALEN)
+                {
+                    etherAddr[byteIndex] = eth_hdr(skb)->h_source[byteIndex] && 
+                                           iter->mask.ethernetAddress[byteIndex];
+                    byteIndex++;
+                }
+ 
+                if (memcmp( etherAddr,
                             iter->value.ethernetAddress,
                             ETH_ALEN) == 0)
                     break;
@@ -239,14 +257,16 @@ int match_values (struct ofp_match *matchQueue,
             }
             case OFPXMT_OFB_IPV4_SRC:
             {
-                if (ip_hdr(skb)->saddr == iter->value.ipAddress)
-                    break;
+                if ((ip_hdr(skb)->saddr && iter->mask.ipAddress) ==                                                                                   
+                    iter->value.ipAddress)                                 
+                    break; 
                 return 0;
             }
             case OFPXMT_OFB_IPV4_DST:
             {
-                if (ip_hdr(skb)->daddr == iter->value.ipAddress)
-                    break;
+                if ((ip_hdr(skb)->daddr && iter->mask.ipAddress) ==                                                                                   
+                    iter->value.ipAddress)                                 
+                    break; 
                 return 0;
             }
             case OFPXMT_OFB_TCP_SRC:
