@@ -97,3 +97,22 @@ enum ofp_flow_mod_command
     OFPFC_DELETE_STRICT = 4, /* Delete entry strictly matching wildcards and priority. */
 };
 
+enum ofp_error_type 
+{
+    OFPET_HELLO_FAILED          = 0, /* Hello protocol failed. */
+    OFPET_BAD_REQUEST           = 1, /* Request was not understood. */
+    OFPET_BAD_ACTION            = 2, /* Error in action description. */
+    OFPET_BAD_INSTRUCTION       = 3, /* Error in instruction list. */
+    OFPET_BAD_MATCH             = 4, /* Error in match. */
+    OFPET_FLOW_MOD_FAILED       = 5, /* Problem modifying flow entry. */
+    OFPET_GROUP_MOD_FAILED      = 6, /* Problem modifying group entry. */
+    OFPET_PORT_MOD_FAILED       = 7, /* Port mod request failed. */
+    OFPET_TABLE_MOD_FAILED      = 8, /* Table mod request failed. */
+    OFPET_QUEUE_OP_FAILED       = 9, /* Queue operation failed. */
+    OFPET_SWITCH_CONFIG_FAILED  = 10, /* Switch config request failed. */ 
+    OFPET_ROLE_REQUEST_FAILED   = 11, /* Controller Role request failed. */ 
+    OFPET_METER_MOD_FAILED      = 12, /* Error in meter. */ 
+    OFPET_TABLE_FEATURES_FAILED = 13, /* Setting table features failed. */
+    OFPET_SUCCESS               = 14,
+    OFPET_EXPERIMENTER          = 0xffff, /* Experimenter error messages. */
+};

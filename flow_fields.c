@@ -22,29 +22,61 @@ struct transportHeader* trans_hdr(const struct sk_buff *skb)
     return (struct transportHeader *)skb_transport_header(skb);
 }
 
-int checkForMatchingFlows(struct list_head match1,
-                          struct list_head match2)
+int checkIfFlowEntriesMatch(struct ofp_match* first,
+                             struct ofp_match* second)
 {
+    while(first && second)
+    {
+        if (! ((sizeof(*first) == sizeof(*second)) && 
+               (memcmp(first+sizeof(struct list_head *),
+                       second+sizeof(struct list_head *),
+                       sizeof(*first) - sizeof(struct list_head  *)) == 0)))
+            return 0;
+
+        first  = (struct ofp_match *)first->next;
+        second = (struct ofp_match *)second->next;
+    }
+    return 1;
 }
 
-void addFlowEntry (struct list_head *head,
-                   struct list_head *new,
-                   __u8 checkForOverlap)
+// The flow entries are sorted based in the priority. The values
+// with the higher priority comes first in the list.
+enum ofp_error_type addFlowEntry (struct list_head *head,
+                                  struct ofp_flow_table *new,
+                                  __u8 checkForOverlap)
 {
-    if (!checkForOverlap)
+    struct ofp_flow_table *entry;
+    struct list_head *prev;
+
+    // Adding first flow entry;
+    if (!head->next)
     {
-        while(head->next)
-            head = head->next;
-        head->next = new;
+        head->next = (struct list_head *)new;
+        return OFPET_SUCCESS;
     }
-    else
+
+    entry = (struct ofp_flow_table *)head->next;
+    prev = head;
+
+    while(entry)
     {
-        while(head->next)
+        if (entry->priority < new->priority)
+            break;
+        else if (checkForOverlap && 
+                 entry->priority == new->priority &&
+                 checkIfFlowEntriesMatch ((struct ofp_match *)entry->match->next,
+                                          (struct ofp_match *)new->match->next))
         {
-           //head = head->next;
-           //if (head->
+            return 0;
         }
+        
+        prev = (struct list_head *)entry;
+        entry = (struct ofp_flow_table *)entry->next;
     }
+
+    new->next = (struct list_head *)entry;
+    prev->next = (struct list_head *)new;
+    return OFPET_SUCCESS;
 }
 
 void deleteFlowEntry (struct list_head *head,
@@ -61,10 +93,10 @@ void deleteFlowEntry (struct list_head *head,
          prev->next = head->next;
 }
 
-struct list_head* getNextEntry (struct list_head *head)
-{
-    
-}
+//struct list_head* getNextEntry (struct list_head *head)
+//{
+//    
+//}
 
 // Verify if flow matches with the entries in the queue.
 int match_values (struct ofp_match *matchQueue,
@@ -240,6 +272,7 @@ static struct nf_hook_ops nf_hook_open_flow;
 
 int init_module (void)
 {
+    struct ofp_flow_table *new;
     nf_hook_open_flow.hook = hook_func;
     nf_hook_open_flow.pf = PF_INET;
     nf_hook_open_flow.hooknum = 0; // NF_IP_PRE_ROUTING
@@ -249,7 +282,7 @@ int init_module (void)
     printk (KERN_INFO "Inside Init of Hello World \n");
 
     flow_head.next = NULL;
-    struct ofp_flow_table *new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
+    new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
     new->next = NULL;
     new->match =  kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
     new->match->next = NULL;
