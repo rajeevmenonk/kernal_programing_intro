@@ -22,6 +22,50 @@ struct transportHeader* trans_hdr(const struct sk_buff *skb)
     return (struct transportHeader *)skb_transport_header(skb);
 }
 
+int checkForMatchingFlows(struct list_head match1,
+                          struct list_head match2)
+{
+}
+
+void addFlowEntry (struct list_head *head,
+                   struct list_head *new,
+                   __u8 checkForOverlap)
+{
+    if (!checkForOverlap)
+    {
+        while(head->next)
+            head = head->next;
+        head->next = new;
+    }
+    else
+    {
+        while(head->next)
+        {
+           //head = head->next;
+           //if (head->
+        }
+    }
+}
+
+void deleteFlowEntry (struct list_head *head,
+                      struct list_head *entry)
+{
+     struct list_head *prev = NULL;
+     while (head != entry)
+     {
+         prev = head;
+         head = head->next;
+     }
+
+     if (prev)
+         prev->next = head->next;
+}
+
+struct list_head* getNextEntry (struct list_head *head)
+{
+    
+}
+
 // Verify if flow matches with the entries in the queue.
 int match_values (struct ofp_match *matchQueue,
                   struct sk_buff *skb)
@@ -167,11 +211,7 @@ int match_values (struct ofp_match *matchQueue,
     return 1;
 }
 
-static struct list_head head;
-static struct list_head tail;
-static struct list_head tail2;
 static struct list_head flow_head;
-static struct list_head flow_tail;
 
 int match_for_flow (struct list_head *head, struct sk_buff *skb)
 {
@@ -208,25 +248,20 @@ int init_module (void)
 
     printk (KERN_INFO "Inside Init of Hello World \n");
 
-    head.next = NULL;
-    tail.next = NULL;
-    tail2.next = NULL;
     flow_head.next = NULL;
-    flow_tail.next = NULL;
-    
     struct ofp_flow_table *new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
     new->next = NULL;
     new->match =  kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
     new->match->next = NULL;
-    setupICMPFilter(new->match, &tail);
-    insertElement(&flow_head, &flow_tail, (struct list_head *)new);
+    setupICMPFilter(new->match);
+    insertElement(&flow_head, (struct list_head *)new);
 
     new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
     new->next = NULL;
     new->match =  kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
     new->match->next = NULL;
-    setupQueue(new->match, &tail2);
-    insertElement(&flow_head, &flow_tail, (struct list_head *)new);
+    setupQueue(new->match);
+    insertElement(&flow_head, (struct list_head *)new);
 
     return 0;
 }
