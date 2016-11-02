@@ -64,5 +64,3 @@ struct ofp_flow_table {
     struct list_head *match; //struct ofp_instruction instructions[0]; /* Instruction set */
     struct ofp_instruction instructions[0]; /* Instruction set */
 };
-
-
