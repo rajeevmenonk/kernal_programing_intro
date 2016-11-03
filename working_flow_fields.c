@@ -9,7 +9,7 @@
 #include <linux/sctp.h>
 #include <linux/icmp.h>
 #include "enums_local.h"
-#include "structs_local.h"
+#include "working_structs_local.h"
 #include "setup_local.h"
 
 struct transportHeader {
