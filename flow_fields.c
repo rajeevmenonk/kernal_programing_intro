@@ -105,145 +105,145 @@ void deleteFlowEntry (struct list_head *head,
 int match_values (struct ofp_match *matchQueue,
                   struct sk_buff *skb)
 {
-    struct ofp_match *iter = matchQueue;
-
-    while(iter)
-    {
-        switch(iter->field)
-        {
-            case OFPXMT_OFB_IN_PHY_PORT:
-            {
-                if (strcmp((skb->dev)->name,
-                           iter->value.interface_name) == 0)
-                    break;
-                return 0;
-            }
-            case OFPXMT_OFB_ETH_DST:
-            {
-                unsigned char etherAddr[ETH_ALEN];
-                __u8 byteIndex = 0;
-                while (byteIndex < ETH_ALEN)
-                {
-                    etherAddr[byteIndex] = eth_hdr(skb)->h_dest[byteIndex] & 
-                                           iter->mask.ethernetAddress[byteIndex];
-                    byteIndex++;
-                }
-                
-                if (memcmp( etherAddr, 
-                            iter->value.ethernetAddress,
-                            ETH_ALEN) == 0)
-                    break;
-                return 0;
-            }
-            case OFPXMT_OFB_ETH_SRC:
-            {
-                unsigned char etherAddr[ETH_ALEN];
-                __u8 byteIndex = 0;
-                while (byteIndex < ETH_ALEN)
-                {
-                    etherAddr[byteIndex] = eth_hdr(skb)->h_source[byteIndex] & 
-                                           iter->mask.ethernetAddress[byteIndex];
-                    byteIndex++;
-                }
- 
-                if (memcmp( etherAddr,
-                            iter->value.ethernetAddress,
-                            ETH_ALEN) == 0)
-                    break;
-                return 0;
-            }
-            case OFPXMT_OFB_ETH_TYPE:
-            {
-                if (eth_hdr(skb)->h_proto == iter->value.ethernetProtocol)
-                    break;
-                return 0;
-            }
-            case OFPXMT_OFB_IP_DSCP:
-            {
-                if ((ip_hdr(skb)->tos >> 2) == iter->value.dscpField)
-                    break;
-                return 0;
-            }
-            case OFPXMT_OFB_IP_PROTO:
-            {
-                if (ip_hdr(skb)->protocol == iter->value.ipProtocol)
-                    break;
-                return 0;
-            }
-            case OFPXMT_OFB_IPV4_SRC:
-            {
-                if ((ip_hdr(skb)->saddr & iter->mask.ipAddress) ==                                                                                   
-                    iter->value.ipAddress)                                 
-                    break;
-                return 0;
-            }
-            case OFPXMT_OFB_IPV4_DST:
-            {
-                if ((ip_hdr(skb)->daddr & iter->mask.ipAddress) ==                                                                                   
-                    iter->value.ipAddress)                                 
-                    break;
-                return 0;
-            }
-            case OFPXMT_OFB_TCP_SRC:
-            case OFPXMT_OFB_UDP_SRC:
-            case OFPXMT_OFB_SCTP_SRC:
-            {
-                if (trans_hdr(skb)->source == iter->value.port)
-                    break;
-                return 0;
-            }
-            case OFPXMT_OFB_TCP_DST:
-            case OFPXMT_OFB_UDP_DST:
-            case OFPXMT_OFB_SCTP_DST:
-            {
-                if (trans_hdr(skb)->dest == iter->value.port)
-                    break;
-                return 0;
-            }
-            case OFPXMT_OFB_ICMPV4_TYPE:
-            {
-                if(icmp_hdr(skb)->type == iter->value.icmpType)
-                    break;
-                return 0;
-            }
-            case OFPXMT_OFB_ICMPV4_CODE:
-            {
-                if(icmp_hdr(skb)->code == iter->value.icmpCode)
-                    break;
-                return 0;
-            }
-            case OFPXMT_OFB_IN_PORT:
-            case OFPXMT_OFB_METADATA:
-            case OFPXMT_OFB_VLAN_VID:
-            case OFPXMT_OFB_VLAN_PCP:
-            case OFPXMT_OFB_IP_ECN:
-            case OFPXMT_OFB_ARP_OP:
-            case OFPXMT_OFB_ARP_SPA:
-            case OFPXMT_OFB_ARP_TPA:
-            case OFPXMT_OFB_ARP_SHA:
-            case OFPXMT_OFB_ARP_THA:
-            case OFPXMT_OFB_IPV6_SRC:
-            case OFPXMT_OFB_IPV6_DST:
-            case OFPXMT_OFB_IPV6_FLABEL:
-            case OFPXMT_OFB_ICMPV6_TYPE:
-            case OFPXMT_OFB_ICMPV6_CODE:
-            case OFPXMT_OFB_IPV6_ND_TARGET:
-            case OFPXMT_OFB_IPV6_ND_SLL:
-            case OFPXMT_OFB_IPV6_ND_TLL:
-            case OFPXMT_OFB_MPLS_LABEL:
-            case OFPXMT_OFB_MPLS_TC:
-            case OFPXMT_OFP_MPLS_BOS:
-            case OFPXMT_OFB_PBB_ISID:
-            case OFPXMT_OFB_TUNNEL_ID:
-            case OFPXMT_OFB_IPV6_EXTHDR:
-            default:
-                return 0;
-
-        }
-        iter = (struct ofp_match *)iter->next;
-    }
-    printk(KERN_INFO "SUCCESS\n" );
-    return 1;
+//    struct ofp_match *iter = matchQueue;
+//
+//    while(iter)
+//    {
+//        switch(iter->field)
+//        {
+//            case OFPXMT_OFB_IN_PHY_PORT:
+//            {
+//                if (strcmp((skb->dev)->name,
+//                           iter->value.interface_name) == 0)
+//                    break;
+//                return 0;
+//            }
+//            case OFPXMT_OFB_ETH_DST:
+//            {
+//                unsigned char etherAddr[ETH_ALEN];
+//                __u8 byteIndex = 0;
+//                while (byteIndex < ETH_ALEN)
+//                {
+//                    etherAddr[byteIndex] = eth_hdr(skb)->h_dest[byteIndex] & 
+//                                           iter->mask.ethernetAddress[byteIndex];
+//                    byteIndex++;
+//                }
+//                
+//                if (memcmp( etherAddr, 
+//                            iter->value.ethernetAddress,
+//                            ETH_ALEN) == 0)
+//                    break;
+//                return 0;
+//            }
+//            case OFPXMT_OFB_ETH_SRC:
+//            {
+//                unsigned char etherAddr[ETH_ALEN];
+//                __u8 byteIndex = 0;
+//                while (byteIndex < ETH_ALEN)
+//                {
+//                    etherAddr[byteIndex] = eth_hdr(skb)->h_source[byteIndex] & 
+//                                           iter->mask.ethernetAddress[byteIndex];
+//                    byteIndex++;
+//                }
+// 
+//                if (memcmp( etherAddr,
+//                            iter->value.ethernetAddress,
+//                            ETH_ALEN) == 0)
+//                    break;
+//                return 0;
+//            }
+//            case OFPXMT_OFB_ETH_TYPE:
+//            {
+//                if (eth_hdr(skb)->h_proto == iter->value.ethernetProtocol)
+//                    break;
+//                return 0;
+//            }
+//            case OFPXMT_OFB_IP_DSCP:
+//            {
+//                if ((ip_hdr(skb)->tos >> 2) == iter->value.dscpField)
+//                    break;
+//                return 0;
+//            }
+//            case OFPXMT_OFB_IP_PROTO:
+//            {
+//                if (ip_hdr(skb)->protocol == iter->value.ipProtocol)
+//                    break;
+//                return 0;
+//            }
+//            case OFPXMT_OFB_IPV4_SRC:
+//            {
+//                if ((ip_hdr(skb)->saddr & iter->mask.ipAddress) ==                                                                                   
+//                    iter->value.ipAddress)                                 
+//                    break;
+//                return 0;
+//            }
+//            case OFPXMT_OFB_IPV4_DST:
+//            {
+//                if ((ip_hdr(skb)->daddr & iter->mask.ipAddress) ==                                                                                   
+//                    iter->value.ipAddress)                                 
+//                    break;
+//                return 0;
+//            }
+//            case OFPXMT_OFB_TCP_SRC:
+//            case OFPXMT_OFB_UDP_SRC:
+//            case OFPXMT_OFB_SCTP_SRC:
+//            {
+//                if (trans_hdr(skb)->source == iter->value.port)
+//                    break;
+//                return 0;
+//            }
+//            case OFPXMT_OFB_TCP_DST:
+//            case OFPXMT_OFB_UDP_DST:
+//            case OFPXMT_OFB_SCTP_DST:
+//            {
+//                if (trans_hdr(skb)->dest == iter->value.port)
+//                    break;
+//                return 0;
+//            }
+//            case OFPXMT_OFB_ICMPV4_TYPE:
+//            {
+//                if(icmp_hdr(skb)->type == iter->value.icmpType)
+//                    break;
+//                return 0;
+//            }
+//            case OFPXMT_OFB_ICMPV4_CODE:
+//            {
+//                if(icmp_hdr(skb)->code == iter->value.icmpCode)
+//                    break;
+//                return 0;
+//            }
+//            case OFPXMT_OFB_IN_PORT:
+//            case OFPXMT_OFB_METADATA:
+//            case OFPXMT_OFB_VLAN_VID:
+//            case OFPXMT_OFB_VLAN_PCP:
+//            case OFPXMT_OFB_IP_ECN:
+//            case OFPXMT_OFB_ARP_OP:
+//            case OFPXMT_OFB_ARP_SPA:
+//            case OFPXMT_OFB_ARP_TPA:
+//            case OFPXMT_OFB_ARP_SHA:
+//            case OFPXMT_OFB_ARP_THA:
+//            case OFPXMT_OFB_IPV6_SRC:
+//            case OFPXMT_OFB_IPV6_DST:
+//            case OFPXMT_OFB_IPV6_FLABEL:
+//            case OFPXMT_OFB_ICMPV6_TYPE:
+//            case OFPXMT_OFB_ICMPV6_CODE:
+//            case OFPXMT_OFB_IPV6_ND_TARGET:
+//            case OFPXMT_OFB_IPV6_ND_SLL:
+//            case OFPXMT_OFB_IPV6_ND_TLL:
+//            case OFPXMT_OFB_MPLS_LABEL:
+//            case OFPXMT_OFB_MPLS_TC:
+//            case OFPXMT_OFP_MPLS_BOS:
+//            case OFPXMT_OFB_PBB_ISID:
+//            case OFPXMT_OFB_TUNNEL_ID:
+//            case OFPXMT_OFB_IPV6_EXTHDR:
+//            default:
+//                return 0;
+//
+//        }
+//        iter = (struct ofp_match *)iter->next;
+//    }
+//    printk(KERN_INFO "SUCCESS\n" );
+//    return 1;
 }
 
 static struct list_head flow_head;
@@ -284,20 +284,20 @@ int init_module (void)
 
     printk (KERN_INFO "Inside Init of Hello World \n");
 
-    flow_head.next = NULL;
-    new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
-    new->next = NULL;
-    new->match =  kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
-    new->match->next = NULL;
-    setupICMPFilter(new->match);
-    insertElement(&flow_head, (struct list_head *)new);
+    //flow_head.next = NULL;
+    //new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
+    //new->next = NULL;
+    //new->match =  kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    //new->match->next = NULL;
+    //setupICMPFilter(new->match);
+    //insertElement(&flow_head, (struct list_head *)new);
 
-    new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
-    new->next = NULL;
-    new->match =  kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
-    new->match->next = NULL;
-    setupQueue(new->match);
-    insertElement(&flow_head, (struct list_head *)new);
+    //new = kmalloc(sizeof(struct ofp_flow_table), GFP_KERNEL);
+    //new->next = NULL;
+    //new->match =  kmalloc(sizeof(struct ofp_match), GFP_KERNEL);
+    //new->match->next = NULL;
+    //setupQueue(new->match);
+    //insertElement(&flow_head, (struct list_head *)new);
 
     return 0;
 }

@@ -1,24 +1,55 @@
-// Flow match fields
-struct ofp_match {
-    struct list_head  *next;
-    __u16             class; /* One of OFPMT_* */
-    __u8              field;
-    __u8              hasMask;
-
-//    __u16 length; /* Length of ofp_match (excluding padding) */
-//    // Add padding
-//    __u8 oxm_fields[4]; /* OXMs start here - Make compiler happy */
-    union matchfield {
-        unsigned char ethernetAddress[ETH_ALEN]; // ETH_ALEN = 6
+struct maskValues {
+        unsigned char sourceEthernetAddress[ETH_ALEN]; // ETH_ALEN = 6
+        unsigned char destEthernetAddress[ETH_ALEN]; // ETH_ALEN = 6
         char          interface_name[IFNAMSIZ];
         __u8          dscpField; // Expected with the value right shifted to right twice.
         __u8          icmpType;
         __u8          icmpCode;
         __u16         ethernetProtocol;
         __u16         ipProtocol;
-        __u16         port;
-        __be32        ipAddress;
-    }                 value, mask;
+        __u16         sourcePort;
+        __u16         destPort;
+        __be32        sourceIpAddress;
+        __be32        destIpAddress;
+};
+
+struct matchValues {
+        unsigned char sourceEthernetAddress[ETH_ALEN]; // ETH_ALEN = 6
+        unsigned char destEthernetAddress[ETH_ALEN]; // ETH_ALEN = 6
+        char          interface_name[IFNAMSIZ];
+        __u8          dscpField; // Expected with the value right shifted to right twice.
+        __u8          icmpType;
+        __u8          icmpCode;
+        __u16         ethernetProtocol;
+        __u16         ipProtocol;
+        __u16         sourcePort;
+        __u16         destPort;
+        __be32        sourceIpAddress;
+        __be32        destIpAddress;
+};
+
+// Flow match fields
+struct ofp_match {
+    struct list_head  *next;
+    __u16             class; /* One of OFPMT_* */
+    __u8              field;
+    __u8              hasMask;
+    struct matchValues value;
+
+//    __u16 length; /* Length of ofp_match (excluding padding) */
+//    // Add padding
+//    __u8 oxm_fields[4]; /* OXMs start here - Make compiler happy */
+//    union matchfield {
+//        unsigned char ethernetAddress[ETH_ALEN]; // ETH_ALEN = 6
+//        char          interface_name[IFNAMSIZ];
+//        __u8          dscpField; // Expected with the value right shifted to right twice.
+//        __u8          icmpType;
+//        __u8          icmpCode;
+//        __u16         ethernetProtocol;
+//        __u16         ipProtocol;
+//        __u16         port;
+//        __be32        ipAddress;
+//    }                 value, mask;
 };
 
 // Instruction header.
