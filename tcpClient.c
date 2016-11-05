@@ -17,7 +17,10 @@ void send_the_packet_out (struct sk_buff *skb)
     struct iovec iov;
     struct msghdr msg;
 
-    if (sock_create(AF_INET, SOCK_STREAM, IPPROTO_TCP, socket) < 0)
+    char buffer[100];
+    mm_segment_t old_fs;
+
+    if (sock_create(AF_INET, SOCK_STREAM, IPPROTO_TCP, &socket) < 0)
     {
         printk (KERN_INFO "SOCKET OPEN FAILED \n");
         return;
@@ -35,10 +38,17 @@ void send_the_packet_out (struct sk_buff *skb)
     memset(&iov, 0, sizeof(struct iovec));
     memset(&msg, 0, sizeof(struct msghdr));
 
-    char buffer[100];
     iov.iov_base = buffer;
     iov.iov_len = 100;
     msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+
+    old_fs = get_fs();
+    set_fs(KERNEL_DS);
+    sock_recvmsg(socket, &msg, 100, 0);
+    set_fs(old_fs);
+
+    printk (KERN_INFO "\nTHE PACKET DATA IS %s\n", buffer);
 }
 
 static struct task_struct *thread_new;
