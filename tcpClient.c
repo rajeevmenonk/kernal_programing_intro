@@ -17,7 +17,7 @@ void send_the_packet_out (struct sk_buff *skb)
     struct iovec iov;
     struct msghdr msg;
 
-    char buffer[100];
+    __u8 buffer[100];
     mm_segment_t old_fs;
 
     if (sock_create(AF_INET, SOCK_STREAM, IPPROTO_TCP, &socket) < 0)
@@ -45,10 +45,17 @@ void send_the_packet_out (struct sk_buff *skb)
 
     old_fs = get_fs();
     set_fs(KERNEL_DS);
-    sock_recvmsg(socket, &msg, 100, 0);
+    int size = sock_recvmsg(socket, &msg, 100, 0);
     set_fs(old_fs);
 
-    printk (KERN_INFO "\nTHE PACKET DATA IS %s\n", buffer);
+    int i = 0;
+    int value = 0;
+    while ( i < size)
+    {
+        value = buffer[i];
+        printk (KERN_INFO "\nTHE PACKET DATA for byte %d is %d \n", i, value);
+        i++;
+    }
 }
 
 static struct task_struct *thread_new;
