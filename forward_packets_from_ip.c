@@ -18,9 +18,9 @@ void send_the_packet_out (struct sk_buff *skb)
     struct net *net = sock_net(sk);
     struct net_device *dev = __dev_get_by_name(net, "eth2");
     struct neighbour *neigh;
+    u32 nexthop = NEXT_HOP_IP_OF;
     
     rcu_read_lock_bh();
-    u32 nexthop = NEXT_HOP_IP_OF;
     neigh = __ipv4_neigh_lookup_noref(dev, nexthop);
     if (unlikely(!neigh))
             neigh = __neigh_create(&arp_tbl, &nexthop, dev, false);

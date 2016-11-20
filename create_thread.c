@@ -19,8 +19,9 @@ void send_the_packet_out (struct sk_buff *skb)
 static struct task_struct *thread_new;
 int init_module (void)
 {
-    printk (KERN_INFO "Inside Init of Hello World \n");
     struct sk_buff *skb = kmalloc(sizeof(*skb), GFP_KERNEL);
+
+    printk (KERN_INFO "Inside Init of Hello World \n");
     skb->len = 100;
     thread_new = kthread_run(&send_the_packet_out, skb, "testThread");
     return 0;
